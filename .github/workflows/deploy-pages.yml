@@ -50,3 +50,15 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
+
+      # 可选：站前挂了 Cloudflare 时，部署完顺手清掉边缘缓存。
+      # 没配 CLOUDFLARE_API_TOKEN / CLOUDFLARE_ZONE_ID 两个 secret 时自动跳过。
+      - name: Purge Cloudflare cache
+        if: ${{ secrets.CLOUDFLARE_API_TOKEN != '' && secrets.CLOUDFLARE_ZONE_ID != '' }}
+        continue-on-error: true
+        run: |
+          curl -sS -X POST \
+            "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/purge_cache" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            --data '{"purge_everything":true}'

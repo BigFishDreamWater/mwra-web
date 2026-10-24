@@ -25,10 +25,23 @@ index.html
 
 原生 HTML / CSS / JavaScript，无框架、无外部字体、无构建步骤。
 
+## 部署
+
+推送 `main` 即触发 GitHub Actions 发布到 GitHub Pages（自定义域 `mwra.cn`），前面再套一层 Cloudflare 代理。
+
+```text
+push → Actions → GitHub Pages → Cloudflare CDN → https://mwra.cn
+```
+
+详细步骤、Cloudflare 配置与排查见 [DEPLOY.md](DEPLOY.md)。
+
 ## 目录
 
 ```text
 .
+├── .github/workflows/deploy-pages.yml   # CI：发布到 GitHub Pages
+├── scripts/setup-cloudflare.ps1         # 一键配置 Cloudflare 代理
+├── DEPLOY.md                            # 部署说明
 ├── index.html
 └── README.md
 ```
