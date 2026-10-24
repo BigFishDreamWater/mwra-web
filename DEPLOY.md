@@ -49,9 +49,11 @@ git push origin main
 
 ```powershell
 $env:CF_API_TOKEN = "粘贴 token"
-.\scripts\setup-cloudflare.ps1 -ApiToken $env:CF_API_TOKEN -DryRun   # 先看要改什么
-.\scripts\setup-cloudflare.ps1 -ApiToken $env:CF_API_TOKEN           # 真正执行
+powershell -ExecutionPolicy Bypass -File .\scripts\setup-cloudflare.ps1 -ApiToken $env:CF_API_TOKEN -DryRun
+powershell -ExecutionPolicy Bypass -File .\scripts\setup-cloudflare.ps1 -ApiToken $env:CF_API_TOKEN
 ```
+
+（`-ExecutionPolicy Bypass` 是因为 Windows 默认禁止运行未签名脚本，直接 `.\scripts\...` 会报「未数字签名」。）
 
 脚本会做四件事：SSL 改 **Full (strict)** → 打开 HTTPS/Brotli/HTTP3、关掉 Rocket Loader → 把 apex 与 www 记录改成 Proxied → 清空缓存。
 
@@ -101,6 +103,22 @@ curl.exe -I https://mwra.cn
 | **Full (strict)** | ✅ GitHub Pages 本来就有合法的 Let's Encrypt 证书，严格校验也能过 |
 
 证书顺序很重要：**先让 GitHub 把证书签发好，再开橙云**。反过来会出现 526（Cloudflare 连不上合法源站证书）。本站证书已签发（`mwra.cn`，2027-01 到期），这一点已经满足。
+
+---
+
+## www 的证书坑
+
+GitHub 目前只给 apex 签了证书（`mwra.cn`，SAN 里没有 www）。所以直连 `https://www.mwra.cn` 会先撞证书警告，再 301 到 apex。
+
+套上 Cloudflare 之后，访客看到的是 Cloudflare 的 Universal SSL（覆盖 `mwra.cn` 与 `*.mwra.cn`），这一层没问题；但 Cloudflare **回源**时仍会遇到不匹配的源站证书，`Full (strict)` 会返回 526。
+
+推荐解法——在边缘直接跳转，根本不回源：
+
+> Cloudflare → **Rules → Redirect Rules → Create rule**
+> - When incoming requests match：`Custom filter expression` → `http.host eq "www.mwra.cn"`
+> - Then：`Static` → `https://mwra.cn/` → Status code `301`
+
+这样 www 只负责跳转，源站证书是否覆盖 www 就无关紧要了。
 
 ---
 

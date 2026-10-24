@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     把 mwra.cn 的 Cloudflare 配置调整为「全站代理 + 严格 SSL + 清缓存」。
 
@@ -35,6 +35,10 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+if ($ApiToken.Trim() -notmatch '^[A-Za-z0-9_\-]{20,100}$') {
+    throw "ApiToken 格式不对：应是 40 位左右的字母/数字/-/_（API Token），不是 Global API Key。"
+}
+
 $base = 'https://api.cloudflare.com/client/v4'
 $headers = @{
     Authorization  = "Bearer $ApiToken"
