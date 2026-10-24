@@ -49,6 +49,7 @@ alt-svc: h3=":443"; ma=86400
 | HTTP/3 | on | QUIC 加速 |
 | Min TLS | 1.2 | 兼容性下限 |
 | Rocket Loader | off | 本站 JS 全内联，它会把脚本执行顺序打乱 |
+| Redirect Rule | `www.mwra.cn` → `https://mwra.cn` | 在边缘 301，不回源；GitHub 没给 www 签证书，回源会撞 `*.github.io` |
 | 边缘缓存 | 默认 | HTML 不缓存（`cf-cache-status: DYNAMIC`），改完刷新即生效 |
 
 改配置的脚本在 `scripts/setup-cloudflare.ps1`，可重复执行（幂等）：
@@ -98,6 +99,7 @@ git push
 | 改了代码线上不变 | 检查 Actions 是否成功；再 Purge Everything |
 | 本地 DNS 还指向 185.199.108.153 | 本机缓存，`ipconfig /flushdns`（需管理员）或等 TTL 过期 |
 | 页面里多了一个 `static.cloudflareinsights.com` 脚本 | Cloudflare Web Analytics 自动注入，控制台 Web Analytics 里可关 |
+| `www` 报 `NET::ERR_CERT_COMMON_NAME_INVALID`，证书是 `*.github.io` | 本地/路由器 DNS 还缓存着 GitHub 的旧 IP，浏览器直连了源站。GitHub 只给 apex 签了证书，www 直连必然报错。清 DNS 缓存或改 DNS 服务商即可 |
 | 访问跳回 github.io | Pages 设置里的自定义域丢了，重新设 `mwra.cn` |
 
 ## 备选：Cloudflare Pages
