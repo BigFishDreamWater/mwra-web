@@ -991,10 +991,28 @@
     }
 
     .ignite-wrap {
+      position: relative;
       display: flex;
       flex-direction: column;
       align-items: center;
       margin-top: clamp(56px, 7vw, 84px);
+    }
+
+    /* 点燃后从圆里升起的火焰粒子层：垫在按钮下面，火苗从边缘冒出 */
+    .ignite-flame {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 2;
+      width: 0;
+      height: 0;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.45s ease;
+    }
+
+    .ignite-flame.is-live {
+      opacity: 1;
     }
 
     .ignite {
@@ -1012,6 +1030,7 @@
       color: var(--paper);
       cursor: pointer;
       isolation: isolate;
+      z-index: 2;
       touch-action: none;
       user-select: none;
       -webkit-user-select: none;
@@ -1043,6 +1062,7 @@
     .ignite svg {
       position: absolute;
       inset: 0;
+      z-index: 3;
       width: 100%;
       height: 100%;
       overflow: visible;
@@ -1067,6 +1087,8 @@
     }
 
     .ignite-label {
+      position: relative;
+      z-index: 4;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -1093,24 +1115,87 @@
       background: rgba(255, 92, 53, 0.05);
     }
 
+    /* 点燃之后：整颗球变成一团在流动的火，而不是一块纯红 */
     .ignite.is-done {
-      background: var(--ember);
-      color: var(--ink);
+      color: var(--paper);
+      background:
+        radial-gradient(circle at 50% 86%, rgba(255, 226, 182, 0.86) 0%, rgba(255, 168, 88, 0.9) 20%, rgba(226, 74, 30, 0.93) 44%, rgba(122, 28, 10, 0.95) 72%, rgba(24, 8, 6, 0.97) 100%);
       box-shadow:
-        0 0 80px rgba(255, 92, 53, 0.34),
-        0 0 160px rgba(255, 92, 53, 0.12);
+        0 0 64px rgba(255, 92, 53, 0.36),
+        0 0 150px rgba(255, 92, 53, 0.16),
+        inset 0 -14px 36px rgba(255, 214, 150, 0.28);
+      animation: igniteBreathe 3.4s ease-in-out infinite;
+    }
+
+    /* 火舌在球面上游走 */
+    .ignite.is-done::after {
+      content: "";
+      position: absolute;
+      inset: -10%;
+      z-index: 1;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 34% 74%, rgba(255, 240, 202, 0.6), transparent 36%),
+        radial-gradient(circle at 66% 68%, rgba(255, 172, 96, 0.52), transparent 42%),
+        radial-gradient(circle at 52% 94%, rgba(255, 126, 60, 0.56), transparent 46%);
+      filter: blur(11px) saturate(1.15);
+      mix-blend-mode: screen;
+      animation: flameDance 2.6s ease-in-out infinite alternate;
+      pointer-events: none;
     }
 
     .ignite.is-done .ring-progress {
-      stroke: var(--paper);
+      stroke: rgba(255, 240, 218, 0.9);
+    }
+
+    .ignite.is-done .ignite-label strong {
+      color: #2b0c05;
+      text-shadow: 0 0 18px rgba(255, 226, 180, 0.75);
     }
 
     .ignite.is-done .ignite-label small {
-      color: rgba(11, 9, 8, 0.55);
+      color: rgba(43, 12, 5, 0.62);
+      text-shadow: none;
     }
 
     .ignite.is-done::before {
-      opacity: 0.7;
+      opacity: 0.85;
+      transform: scale(1.05);
+    }
+
+    @keyframes flameDance {
+      0% {
+        transform: translate3d(-3%, 2%, 0) scale(0.97, 1.04) rotate(-2deg);
+        opacity: 0.82;
+      }
+      35% {
+        transform: translate3d(2%, -3%, 0) scale(1.04, 1.06) rotate(1.5deg);
+        opacity: 1;
+      }
+      70% {
+        transform: translate3d(-1%, -1%, 0) scale(1.01, 0.97) rotate(2.5deg);
+        opacity: 0.9;
+      }
+      100% {
+        transform: translate3d(3%, 1%, 0) scale(0.99, 1.05) rotate(-1deg);
+        opacity: 0.86;
+      }
+    }
+
+    @keyframes igniteBreathe {
+      0%,
+      100% {
+        box-shadow:
+          0 0 56px rgba(255, 92, 53, 0.32),
+          0 0 140px rgba(255, 92, 53, 0.14),
+          inset 0 -14px 34px rgba(255, 214, 150, 0.24);
+      }
+      50% {
+        box-shadow:
+          0 0 82px rgba(255, 126, 62, 0.46),
+          0 0 188px rgba(255, 92, 53, 0.22),
+          inset 0 -14px 42px rgba(255, 228, 172, 0.34);
+      }
     }
 
     .ignite-message {
@@ -1650,6 +1735,7 @@
               <strong id="igniteLabel">按住 · 点燃</strong>
               <small id="igniteHint">Hold to feel</small>
             </span>
+            <canvas class="ignite-flame" id="igniteFlame" aria-hidden="true"></canvas>
           </button>
           <p class="ignite-message" id="igniteMessage" aria-live="polite">你不需要向任何人证明这份热爱。</p>
         </div>
@@ -1955,6 +2041,7 @@
           igniteHint.textContent = "It stayed";
           igniteMessage.textContent = "它还在。那就够了。";
           burst(ignite);
+          startFlame();
           if (navigator.vibrate) {
             navigator.vibrate([18, 40, 26]);
           }
@@ -2008,23 +2095,249 @@
           var rect = element.getBoundingClientRect();
           var originX = rect.left + rect.width / 2;
           var originY = rect.top + rect.height / 2;
-          var count = 22;
+          var count = 34;
+          var palette = ["#fff3d6", "#ffd08a", "#e9b97d", "#ff5c35"];
 
           for (var i = 0; i < count; i += 1) {
             var spark = document.createElement("span");
-            var angle = (Math.PI * 2 * i) / count + Math.random() * 0.4;
-            var distance = 90 + Math.random() * 150;
+            // 火花整体朝上飞散，只有少量向两侧溢出，像被热气托起来
+            var angle = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 1.5;
+            var distance = 70 + Math.random() * 210;
+            var size = 2 + Math.random() * 4.5;
+            var color = palette[Math.floor(Math.random() * palette.length)];
+
             spark.className = "spark";
             spark.style.left = originX + "px";
             spark.style.top = originY + "px";
+            spark.style.width = size.toFixed(1) + "px";
+            spark.style.height = size.toFixed(1) + "px";
+            spark.style.background = color;
+            spark.style.boxShadow = "0 0 " + (8 + size * 2).toFixed(1) + "px " + color;
             spark.style.setProperty("--dx", (Math.cos(angle) * distance).toFixed(1) + "px");
             spark.style.setProperty("--dy", (Math.sin(angle) * distance).toFixed(1) + "px");
-            spark.style.animationDelay = (Math.random() * 90).toFixed(0) + "ms";
-            spark.style.background = i % 3 === 0 ? "#f0e8db" : "#e9b97d";
+            spark.style.animationDelay = (Math.random() * 120).toFixed(0) + "ms";
+            spark.style.animationDuration = (0.85 + Math.random() * 0.7).toFixed(2) + "s";
             document.body.appendChild(spark);
             spark.addEventListener("animationend", function () {
               this.remove();
             });
+          }
+        }
+
+        // 点燃后的火焰：粒子从圆里升起、被热风拨动，而不是把整颗球刷成一块纯红
+        var flameCanvas = document.getElementById("igniteFlame");
+        var flameCtx = flameCanvas && flameCanvas.getContext ? flameCanvas.getContext("2d") : null;
+        var flameParts = [];
+        var flameRaf = 0;
+        var flameLast = 0;
+        var flameW = 0;
+        var flameH = 0;
+        var flameEmitUntil = 0;
+        var flameActive = false;
+        var flameVisible = true;
+        var flameObserver = null;
+        var flameOrigin = { x: 0, y: 0, r: 0 };
+
+        function layoutFlame() {
+          if (!flameCtx) {
+            return;
+          }
+
+          var btnRect = ignite.getBoundingClientRect();
+          var padX = 170;
+          var padTop = 380;
+          var padBottom = 90;
+
+          flameW = btnRect.width + padX * 2;
+          flameH = btnRect.height + padTop + padBottom;
+
+          var ratio = Math.min(window.devicePixelRatio || 1, 2);
+          flameCanvas.style.width = flameW + "px";
+          flameCanvas.style.height = flameH + "px";
+          // 画布是按钮的子元素，坐标直接相对按钮左上角
+          flameCanvas.style.left = (-padX).toFixed(1) + "px";
+          flameCanvas.style.top = (-padTop).toFixed(1) + "px";
+          flameCanvas.width = Math.round(flameW * ratio);
+          flameCanvas.height = Math.round(flameH * ratio);
+          flameCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+
+          flameOrigin.x = padX + btnRect.width / 2;
+          flameOrigin.y = padTop + btnRect.height / 2;
+          flameOrigin.r = btnRect.width / 2;
+        }
+
+        // 火苗贴图：一次画好，之后每帧只做缩放，省得反复建渐变
+        function makeFlameSprite(core, edge) {
+          var sprite = document.createElement("canvas");
+          sprite.width = 96;
+          sprite.height = 192;
+          var sctx = sprite.getContext("2d");
+          var grad = sctx.createRadialGradient(48, 110, 0, 48, 110, 92);
+          grad.addColorStop(0, core);
+          grad.addColorStop(0.34, edge);
+          grad.addColorStop(1, "rgba(255, 60, 20, 0)");
+          sctx.fillStyle = grad;
+          sctx.beginPath();
+          sctx.ellipse(48, 110, 40, 78, 0, 0, Math.PI * 2);
+          sctx.fill();
+          return sprite;
+        }
+
+        var flameSpriteHot = makeFlameSprite("rgba(255, 252, 238, 1)", "rgba(255, 196, 120, 0.85)");
+        var flameSpriteEmber = makeFlameSprite("rgba(255, 168, 92, 0.95)", "rgba(226, 74, 30, 0.8)");
+
+        function spawnFlame() {
+          var tongue = Math.random() < 0.3;
+          // 火舌从两侧和下方窜起，中间留给“热爱仍在”
+          var side = Math.random() < 0.5 ? -1 : 1;
+          var offset = tongue
+            ? (Math.random() - 0.5) * 0.7
+            : side * (0.4 + Math.random() * 0.55);
+          var lift = tongue ? -0.2 + Math.random() * 0.6 : 0.15 + Math.random() * 0.6;
+
+          flameParts.push({
+            x: flameOrigin.x + offset * flameOrigin.r,
+            y: flameOrigin.y + lift * flameOrigin.r,
+            vx: (Math.random() - 0.5) * 30 + offset * 16,
+            vy: -(96 + Math.random() * 104) * (1 - Math.abs(offset) * 0.2),
+            life: 0,
+            max: tongue ? 1200 + Math.random() * 800 : 900 + Math.random() * 900,
+            size: tongue ? 7 + Math.random() * 5 : 1.6 + Math.random() * 2.4,
+            big: tongue,
+            seed: Math.random() * Math.PI * 2,
+            sway: 8 + Math.random() * 18
+          });
+        }
+
+        function stepFlame(time) {
+          flameRaf = 0;
+          if (!flameCtx) {
+            return;
+          }
+          if (!flameEmitUntil) {
+            flameEmitUntil = time + 2300;
+          }
+
+          var delta = flameLast ? Math.min((time - flameLast) / 1000, 0.05) : 0.016;
+          flameLast = time;
+
+          flameCtx.clearRect(0, 0, flameW, flameH);
+          flameCtx.globalCompositeOperation = "lighter";
+
+          // 一阵缓慢变化的风，让整柱火苗一起摆
+          var wind = Math.sin(time * 0.0014) * 14 + Math.sin(time * 0.0043) * 5;
+
+          if (time < flameEmitUntil) {
+            var perFrame = flameParts.length < 260 ? 5 : 2;
+            for (var n = 0; n < perFrame; n += 1) {
+              spawnFlame();
+            }
+          } else if (flameParts.length < 70 && Math.random() < 0.24) {
+            // 仪式过后留一簇长明的火，别让它变回一块死红色
+            spawnFlame();
+          }
+
+          for (var i = flameParts.length - 1; i >= 0; i -= 1) {
+            var p = flameParts[i];
+            p.life += delta * 1000;
+            var t = p.life / p.max;
+            if (t >= 1) {
+              flameParts.splice(i, 1);
+              continue;
+            }
+
+            p.vy -= 52 * delta;
+            p.vx += (Math.sin(p.seed + p.life * 0.007) * p.sway + wind) * delta;
+            p.x += p.vx * delta;
+            p.y += p.vy * delta;
+
+            var fade = 1 - t;
+            var flicker = 0.7 + Math.sin(p.life * 0.021 + p.seed) * 0.3;
+            var alpha = Math.min(1, fade * fade * 1.1 * flicker);
+            if (!p.big) {
+              alpha *= Math.min(1, t * 6);
+            }
+            var sprite = t < 0.5 ? flameSpriteHot : flameSpriteEmber;
+            var width = p.size * (p.big ? 4.4 : 3.6);
+            var height = p.size * (p.big ? 9.6 : 7.4);
+            var drift = Math.sin(p.seed + p.life * 0.006) * p.size * 0.9;
+
+            // 竖着长的火舌：外面一层宽而暗的软光，里面一层窄而亮的芯
+            flameCtx.globalAlpha = alpha * (p.big ? 0.34 : 0.5);
+            flameCtx.drawImage(sprite, p.x + drift - width / 2, p.y - height / 2, width, height);
+
+            flameCtx.globalAlpha = alpha * (p.big ? 0.55 : 0.85);
+            flameCtx.drawImage(
+              sprite,
+              p.x + drift * 0.7 - width * 0.26,
+              p.y - height * 0.3,
+              width * 0.52,
+              height * 0.6
+            );
+          }
+
+          flameCtx.globalAlpha = 1;
+          flameCtx.globalCompositeOperation = "source-over";
+
+          if (flameActive && flameVisible && !document.hidden) {
+            flameRaf = window.requestAnimationFrame(stepFlame);
+          } else {
+            flameRaf = 0;
+          }
+        }
+
+        function resumeFlame() {
+          if (!flameActive || flameRaf || !flameCtx) {
+            return;
+          }
+          flameLast = 0;
+          flameRaf = window.requestAnimationFrame(stepFlame);
+        }
+
+        function pauseFlame() {
+          if (flameRaf) {
+            window.cancelAnimationFrame(flameRaf);
+            flameRaf = 0;
+          }
+        }
+
+        function startFlame() {
+          if (!flameCtx || reduceMotion) {
+            return;
+          }
+          layoutFlame();
+          flameParts = [];
+          flameEmitUntil = 0;
+          flameLast = 0;
+          // 起手先补一批，点燃瞬间就是炸开的，而不是从零慢慢冒
+          for (var i = 0; i < 26; i += 1) {
+            spawnFlame();
+          }
+          flameCanvas.classList.add("is-live");
+          flameActive = true;
+          window.addEventListener("resize", layoutFlame);
+          document.addEventListener("visibilitychange", handleFlameVisibility);
+          if (!flameObserver && "IntersectionObserver" in window) {
+            flameObserver = new IntersectionObserver(function (entries) {
+              flameVisible = entries[0].isIntersecting;
+              if (flameVisible) {
+                resumeFlame();
+              } else {
+                pauseFlame();
+              }
+            }, { threshold: 0.01 });
+            flameObserver.observe(ignite);
+          }
+          if (!flameRaf) {
+            flameRaf = window.requestAnimationFrame(stepFlame);
+          }
+        }
+
+        function handleFlameVisibility() {
+          if (document.hidden) {
+            pauseFlame();
+          } else {
+            resumeFlame();
           }
         }
 
