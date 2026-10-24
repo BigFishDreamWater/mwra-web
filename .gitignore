@@ -1,0 +1,9 @@
+# Local preview screenshots
+.preview-*.png
+.verify-*.png
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
