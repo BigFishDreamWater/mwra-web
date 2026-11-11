@@ -101,6 +101,9 @@ git push
 | 页面里多了一个 `static.cloudflareinsights.com` 脚本 | Cloudflare Web Analytics 自动注入，控制台 Web Analytics 里可关 |
 | `www` 报 `NET::ERR_CERT_COMMON_NAME_INVALID`，证书是 `*.github.io` | 本地/路由器 DNS 还缓存着 GitHub 的旧 IP，浏览器直连了源站。GitHub 只给 apex 签了证书，www 直连必然报错。清 DNS 缓存或改 DNS 服务商即可 |
 | 访问跳回 github.io | Pages 设置里的自定义域丢了，重新设 `mwra.cn` |
+| 页面没声音 / 按钮显示 Voiceover unavailable | 浏览器禁止自动播放，必须点 `Play with sound`；若点了还报错，多半是 `/promo/vo-*.mp3` 404，检查 `promo/` 目录是否一起发布 |
+| 样式或字体丢失 | `assets/` 没上传，或站点不在域名根目录（页面用绝对路径 `/assets/...`、`/promo/...`） |
+| 改了配音但线上还是旧声音 | mp3 同名会被 CDN / 浏览器缓存；发布时可给 `VOICE_FILES` 的 `?v=` 换版本号并重新构建 |
 
 ## 备选：Cloudflare Pages
 

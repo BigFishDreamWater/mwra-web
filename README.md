@@ -1,30 +1,50 @@
-# 名为热爱 · A Study in Fire
+# HiCreator · One, two, no three.
 
-一封写给所有不肯熄灭的人的单页情书。
+一条 27 秒的产品短片落地页：**一次输入，两次点击，没有第三步** —— HiCreator 现在免费。
 
-页面以「名为热爱」为主题，用燃烧的余烬、巨大的排印和一段可以亲手点亮的仪式，讲述热爱的三种形状：点燃、抵达、回响。
+访问 <https://mwra.cn/> 即可观看；这一版是有声音的，点击页中央的 **Play with sound** 开始播放。
 
 ## 预览
 
-无需安装依赖，直接在浏览器中打开 `index.html` 即可。
+纯静态页面，无需构建。本地起一个静态服务器即可（页面用根路径 `/assets`、`/promo`，不能用 `file://` 直接打开）：
 
-```text
-index.html
+```powershell
+python -m http.server 8080
+# 然后访问 http://127.0.0.1:8080/
 ```
 
-## 特点
+调试参数：`?t=11.8&still=1` 可以定格到某一帧，用于截图。
 
-- 单文件实现，CSS 与 JavaScript 全部内联，可离线打开
-- 深色余烬视觉、发光轨道与 Canvas 火星粒子
-- 滚动进度、分段入场动画与数字排印
-- 「按住 · 点燃」交互仪式，支持鼠标、触摸与键盘
-- 点燃瞬间迸出火焰粒子：火舌从圆里窜起、被热风拨动，最后留一簇长明的余烬
-- 响应式布局，适配桌面与移动端
-- 支持 `prefers-reduced-motion`，自动减少动效
+## 页面内容
+
+- 主标题：How many steps to promote a brand with influencers?
+- 三个步骤：One thing → Two clicks → Three?
+- 产品演示窗口：合同审批 → 视频审核，带点击光标、确认戳、彩带动效
+- 底部字幕条逐词上浮，`NO` 高亮脉冲
+- 结尾大字：HiCreator now free!
+- 两张真实截图（REAL UI）证明区
+
+## 声音
+
+- 10 段英文配音（`promo/vo-*.mp3`）通过 Web Audio API 解码后按绝对时间调度
+- 氛围垫音与点击 / 风切 / 冲击音效在浏览器里实时合成，不额外依赖音频文件
+- 浏览器禁止自动播放，必须点一下才开始；右上角可静音，CC 可关字幕
+- 声画时间轴写在构建产物里，改动配音时长需要重新构建，不能只换 mp3
 
 ## 技术
 
-原生 HTML / CSS / JavaScript，无框架、无外部字体、无构建步骤。
+原生 HTML / CSS / JavaScript（由 Vite 构建为 `assets/` 下的 hash 资源），无框架、无后端、无外部字体。
+
+```text
+index.html                 页面结构与静态文案
+assets/promo-*.js|css      构建产物（含时间轴、字幕、音频调度）
+assets/*.woff2             本地打包的 Inter / JetBrains Mono
+promo/                     10 段配音 + 头像 + 视频封面 + 2 张真实截图
+platform/                  YouTube / Instagram 图标
+favicon.svg                站点图标
+```
+
+> 资源全部使用根路径（`/assets/...`、`/promo/...`），因此必须部署在域名根目录，且这几条路径不能改名。
 
 ## 部署
 
@@ -35,14 +55,3 @@ push → Actions → GitHub Pages → Cloudflare CDN → https://mwra.cn
 ```
 
 详细步骤、Cloudflare 配置与排查见 [DEPLOY.md](DEPLOY.md)。
-
-## 目录
-
-```text
-.
-├── .github/workflows/deploy-pages.yml   # CI：发布到 GitHub Pages
-├── scripts/setup-cloudflare.ps1         # 一键配置 Cloudflare 代理
-├── DEPLOY.md                            # 部署说明
-├── index.html
-└── README.md
-```
