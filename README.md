@@ -1,6 +1,6 @@
-# HiCreator · One, two, no three.
+﻿# HiCreator · One, two, no three.
 
-一条 26 秒的产品短片落地页：**一次输入，两次点击，没有第三步** —— HiCreator 免费开始。
+一条 29 秒的产品短片落地页：**一次输入，两次点击，没有第三步** —— HiCreator 免费开始。
 
 访问 <https://mwra.cn/> 即可观看；这一版是有声音的，点击页中央的 **Play with sound** 开始播放。
 
